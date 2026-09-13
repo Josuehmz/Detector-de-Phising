@@ -1,0 +1,189 @@
+/*
+ * Estilos del overlay inyectado en Gmail.
+ *
+ * Todo va bajo el prefijo `pg-` y con `all: initial` en la raíz de cada bloque
+ * inyectado. Gmail trae sus propias reglas globales y, sin ese aislamiento, la
+ * hoja de la página deforma el panel; peor aún, nuestras reglas podrían alterar
+ * el aspecto del correo del usuario.
+ */
+
+.pg-boton,
+.pg-panel {
+  all: initial;
+  font-family: "Google Sans", Roboto, Arial, sans-serif;
+  box-sizing: border-box;
+  position: fixed;
+  z-index: 2147483000; /* Por encima de los diálogos de Gmail. */
+}
+
+.pg-boton {
+  right: 24px;
+  bottom: 24px;
+  display: block;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #1a73e8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.pg-boton:hover {
+  background: #1765cc;
+}
+
+.pg-panel {
+  right: 24px;
+  bottom: 76px;
+  width: 380px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border-radius: 10px;
+  background: #fff;
+  color: #202124;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.pg-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pg-titulo {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5f6368;
+}
+
+.pg-cerrar {
+  all: initial;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 18px;
+  line-height: 1;
+  color: #5f6368;
+  font-family: inherit;
+}
+
+.pg-veredicto {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.pg-veredicto-texto {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.pg-score {
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.pg-phishing {
+  background: #fce8e6;
+  border-color: #d93025;
+  color: #c5221f;
+}
+
+.pg-sospechoso {
+  background: #fef7e0;
+  border-color: #f29900;
+  color: #b06000;
+}
+
+.pg-legitimo {
+  background: #e6f4ea;
+  border-color: #1e8e3e;
+  color: #137333;
+}
+
+.pg-aviso {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f1f3f4;
+  font-size: 12px;
+  color: #5f6368;
+}
+
+.pg-explicacion {
+  margin: 12px 0 0;
+  white-space: pre-line; /* La explicación trae saltos de línea y viñetas. */
+}
+
+.pg-mensaje {
+  margin: 8px 0 0;
+}
+
+.pg-error {
+  color: #c5221f;
+}
+
+.pg-detalle {
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.pg-detalle summary {
+  cursor: pointer;
+  color: #1a73e8;
+}
+
+.pg-senales {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pg-senal {
+  padding: 6px 0 6px 10px;
+  border-left: 3px solid #dadce0;
+  margin-bottom: 6px;
+}
+
+.pg-sev-alta {
+  border-color: #d93025;
+}
+
+.pg-sev-media {
+  border-color: #f29900;
+}
+
+.pg-sev-baja {
+  border-color: #9aa0a6;
+}
+
+.pg-senal-desc {
+  display: block;
+}
+
+.pg-evidencia {
+  display: block;
+  margin-top: 3px;
+  font-family: "Roboto Mono", Consolas, monospace;
+  font-size: 11px;
+  color: #5f6368;
+  word-break: break-all;
+}
+
+.pg-pie {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e8eaed;
+  font-size: 11px;
+  color: #80868b;
+}

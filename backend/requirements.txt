@@ -1,0 +1,15 @@
+# Versiones fijadas para que la entrega corra igual en otra máquina.
+# Probado con Python 3.12.
+
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+python-multipart==0.0.20   # requerido por FastAPI para recibir el .eml subido
+
+# Pruebas
+pytest==8.3.4
+httpx==0.28.1              # lo usa TestClient de Starlette
+
+# El adaptador real de Claude (app/llm/claude.py) NO se instala por defecto:
+# el demo corre con el stub. Para el sprint 4, descomentar:
+# anthropic==0.69.0

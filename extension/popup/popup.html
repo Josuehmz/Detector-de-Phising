@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>PhishGuard</title>
+  </head>
+  <body>
+    <header>
+      <h1>PhishGuard</h1>
+      <span id="estado" class="estado">comprobando backend…</span>
+    </header>
+
+    <nav class="pestanas">
+      <button class="pestana activa" data-panel="pegar">Pegar correo</button>
+      <button class="pestana" data-panel="ejemplos">Ejemplos</button>
+    </nav>
+
+    <section id="panel-pegar" class="panel">
+      <label for="asunto">Asunto</label>
+      <input id="asunto" type="text" placeholder="Verifique su cuenta" />
+
+      <label for="remitente">Remitente</label>
+      <input id="remitente" type="text" placeholder="Soporte &lt;x@dominio.com&gt;" />
+
+      <label for="cuerpo">Cuerpo del correo</label>
+      <textarea id="cuerpo" rows="7" placeholder="Pega aquí el texto del correo…"></textarea>
+
+      <div class="acciones">
+        <button id="analizar" class="primario">Analizar</button>
+        <label for="eml" class="secundario">Subir .eml</label>
+        <input id="eml" type="file" accept=".eml,message/rfc822" hidden />
+      </div>
+    </section>
+
+    <section id="panel-ejemplos" class="panel oculto">
+      <p class="nota">
+        Correos sintéticos, uno por escenario de prueba. No son datos reales ni
+        sirven para medir desempeño.
+      </p>
+      <ul id="lista-ejemplos" class="ejemplos"></ul>
+    </section>
+
+    <section id="resultado" class="resultado oculto"></section>
+
+    <footer>
+      <label for="backend">Backend</label>
+      <input id="backend" type="text" spellcheck="false" />
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

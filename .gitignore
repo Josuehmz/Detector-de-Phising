@@ -1,0 +1,28 @@
+# Entornos virtuales y artefactos de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Datasets: no se versionan. Nazario y SpamAssassin se descargan aparte
+# (ver docs/arquitectura.md) y no nos corresponde redistribuirlos.
+backend/data/
+*.mbox
+
+# Correos reales: nunca deben llegar al repositorio.
+*.eml
+!backend/tests/**/*.eml
+
+# Secretos
+.env
+.env.*
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

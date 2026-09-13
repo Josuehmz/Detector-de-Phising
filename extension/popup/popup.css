@@ -1,0 +1,281 @@
+/* Estilos del popup. Aquí no hay que aislarse de nada: la página es nuestra. */
+
+:root {
+  --azul: #1a73e8;
+  --gris: #5f6368;
+  --borde: #dadce0;
+  --rojo: #c5221f;
+  --ambar: #b06000;
+  --verde: #137333;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 400px;
+  margin: 0;
+  padding: 12px 14px 14px;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 13px;
+  color: #202124;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.estado {
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.estado.bueno {
+  color: var(--verde);
+}
+
+.estado.aviso {
+  color: var(--ambar);
+}
+
+.estado.malo {
+  color: var(--rojo);
+}
+
+.pestanas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--borde);
+  margin-bottom: 10px;
+}
+
+.pestana {
+  border: 0;
+  background: none;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--gris);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.pestana.activa {
+  color: var(--azul);
+  border-bottom-color: var(--azul);
+}
+
+.oculto {
+  display: none;
+}
+
+label {
+  display: block;
+  margin: 8px 0 3px;
+  font-size: 11px;
+  color: var(--gris);
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--borde);
+  border-radius: 4px;
+  font: inherit;
+  resize: vertical;
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.primario,
+.secundario {
+  padding: 7px 14px;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.primario {
+  background: var(--azul);
+  color: #fff;
+}
+
+.secundario {
+  margin: 0;
+  border-color: var(--borde);
+  color: var(--azul);
+  font-size: 13px;
+}
+
+.nota {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.ejemplos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ejemplo {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 9px;
+  margin-bottom: 5px;
+  border: 1px solid var(--borde);
+  border-radius: 5px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ejemplo:hover {
+  border-color: var(--azul);
+}
+
+.escenario {
+  display: block;
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.asunto-ejemplo {
+  display: block;
+}
+
+.resultado {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+}
+
+.resultado.oculto {
+  display: block; /* El resultado siempre ocupa su sitio una vez hay algo. */
+}
+
+.veredicto {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.veredicto.phishing {
+  background: #fce8e6;
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+
+.veredicto.sospechoso {
+  background: #fef7e0;
+  border-color: #f29900;
+  color: var(--ambar);
+}
+
+.veredicto.legitimo {
+  background: #e6f4ea;
+  border-color: #1e8e3e;
+  color: var(--verde);
+}
+
+.score {
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.aviso {
+  margin: 8px 0 0;
+  padding: 7px 9px;
+  border-radius: 5px;
+  background: #f1f3f4;
+  font-size: 11px;
+  color: var(--gris);
+}
+
+.explicacion {
+  margin: 10px 0 0;
+  white-space: pre-line;
+}
+
+.error {
+  color: var(--rojo);
+}
+
+details {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+summary {
+  cursor: pointer;
+  color: var(--azul);
+}
+
+.senales {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.senales li {
+  padding: 5px 0 5px 9px;
+  margin-bottom: 5px;
+  border-left: 3px solid var(--borde);
+}
+
+.sev-alta {
+  border-color: var(--rojo);
+}
+
+.sev-media {
+  border-color: #f29900;
+}
+
+.sev-baja {
+  border-color: #9aa0a6;
+}
+
+code {
+  display: block;
+  margin-top: 3px;
+  font-family: Consolas, "Roboto Mono", monospace;
+  font-size: 11px;
+  color: var(--gris);
+  word-break: break-all;
+}
+
+.pie {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #80868b;
+}
+
+footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--borde);
+}
+
+footer input {
+  font-size: 11px;
+}
