@@ -16,9 +16,12 @@
   z-index: 2147483000; /* Por encima de los diálogos de Gmail. */
 }
 
+/* Separado del borde inferior a propósito: en esa esquina viven la marca de agua
+   de activación de Windows y las burbujas de chat de Gmail. Un botón que queda
+   debajo de otra cosa es indistinguible de un botón que no se dibujó. */
 .pg-boton {
   right: 24px;
-  bottom: 24px;
+  bottom: 96px;
   display: block;
   padding: 10px 16px;
   border-radius: 999px;
@@ -36,7 +39,7 @@
 
 .pg-panel {
   right: 24px;
-  bottom: 76px;
+  bottom: 148px;
   width: 380px;
   max-height: 70vh;
   overflow-y: auto;
@@ -47,6 +50,25 @@
   font-size: 13px;
   line-height: 1.45;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* Botón dentro del panel (p. ej. "analizar solo el texto visible"). No lleva
+   `all: initial` porque hereda bien del panel, que ya está aislado. */
+.pg-boton-inline {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a73e8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pg-boton-inline:hover {
+  border-color: #1a73e8;
 }
 
 .pg-cabecera {

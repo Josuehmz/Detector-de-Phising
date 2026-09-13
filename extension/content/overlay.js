@@ -1,7 +1,7 @@
 /**
  * Interfaz dentro de Gmail: el botón de análisis y el panel de resultado.
  *
- * Dos decisiones de diseño que conviene poder sustentar:
+ * Tres decisiones de diseño que conviene poder sustentar:
  *
  * 1. **El análisis se dispara con un clic, nunca solo.** Analizar cada correo al
  *    abrirlo significaría enviar toda la bandeja de entrada a un servicio
@@ -12,12 +12,19 @@
  *    El panel muestra fragmentos del correo analizado como evidencia, y ese
  *    correo es entrada del atacante. Construirlo con `innerHTML` convertiría a
  *    la extensión en el vehículo de la inyección que pretende detectar.
+ *
+ * 3. **El botón está siempre, y el fallo se explica.** La primera versión solo
+ *    mostraba el botón cuando reconocía un mensaje abierto: si los selectores de
+ *    Gmail cambiaban, no aparecía nada y el usuario no tenía forma de saber si
+ *    la extensión estaba instalada, si el backend estaba caído o si el DOM había
+ *    cambiado. Un fallo silencioso es peor que un fallo.
  */
 
 (() => {
   "use strict";
 
   const ID_PANEL = "phishguard-panel";
+  const ID_BOTON = "phishguard-boton";
 
   const ETIQUETAS = {
     phishing: { texto: "Phishing", clase: "pg-phishing" },
@@ -66,9 +73,74 @@
     const el = limpiar(panel());
     el.appendChild(cabecera(titulo));
     el.appendChild(crear("p", `pg-mensaje ${clase}`, texto));
+    return el;
   }
 
-  function mostrarAnalisis(analisis) {
+  // --------------------------------------------------------------- Diagnóstico
+
+  /**
+   * Panel de fallo de extracción.
+   *
+   * Muestra qué campo no se pudo leer y con qué selectores se intentó. Sirve
+   * para dos cosas: que el usuario sepa que la extensión sí está viva, y que
+   * quien mantenga el adaptador sepa exactamente qué selector actualizar.
+   */
+  function mostrarFalloDeExtraccion(resultado) {
+    const el = limpiar(panel());
+    el.appendChild(cabecera("PhishGuard · no se pudo leer el correo"));
+
+    const fallidos = resultado.diagnostico.filter((d) => !d.ok);
+    const hayCuerpo = Boolean(resultado.parcial?.cuerpo_texto);
+
+    el.appendChild(
+      crear(
+        "p",
+        "pg-mensaje",
+        fallidos.length === resultado.diagnostico.length
+          ? "No hay ningún correo abierto, o la estructura de Gmail cambió por completo."
+          : "Gmail cambió su estructura y faltan campos que el análisis necesita."
+      )
+    );
+
+    const lista = crear("ul", "pg-senales");
+    for (const campo of resultado.diagnostico) {
+      const item = crear("li", `pg-senal ${campo.ok ? "pg-sev-baja" : "pg-sev-alta"}`);
+      item.appendChild(crear("span", "pg-senal-desc", `${campo.ok ? "✓" : "✗"} ${campo.campo}`));
+      if (!campo.ok) {
+        item.appendChild(crear("code", "pg-evidencia", campo.selectores.join(" , ")));
+      }
+      lista.appendChild(item);
+    }
+    el.appendChild(lista);
+
+    // Sin remitente no hay análisis completo, pero el usuario puede pedir uno
+    // parcial a sabiendas. Es una decisión suya, explícita, y queda marcada.
+    if (hayCuerpo) {
+      const aviso = crear(
+        "p",
+        "pg-aviso",
+        "Se puede analizar solo el texto visible, pero sin remitente no se evalúa " +
+          "suplantación ni autenticación: un veredicto «sin indicios» no significaría nada."
+      );
+      el.appendChild(aviso);
+
+      const boton = crear("button", "pg-boton-inline", "Analizar solo el texto visible");
+      boton.addEventListener("click", () => enviarAlBackend(resultado.parcial, true));
+      el.appendChild(boton);
+    }
+
+    el.appendChild(
+      crear(
+        "p",
+        "pg-mensaje",
+        "Alternativa fiable: abre el popup de la extensión y pega el correo a mano."
+      )
+    );
+  }
+
+  // ----------------------------------------------------------------- Resultado
+
+  function mostrarAnalisis(analisis, esParcial = false) {
     const el = limpiar(panel());
     const etiqueta = ETIQUETAS[analisis.veredicto] || ETIQUETAS.sospechoso;
 
@@ -81,8 +153,19 @@
     );
     el.appendChild(veredicto);
 
-    // Las advertencias van arriba del todo: la más importante es que el juicio
-    // salió de un stub y no de un modelo.
+    if (esParcial) {
+      el.appendChild(
+        crear(
+          "p",
+          "pg-aviso",
+          "ANÁLISIS PARCIAL: solo se analizó el texto visible. Sin remitente ni " +
+            "cabeceras, las señales de suplantación y autenticación no se evaluaron."
+        )
+      );
+    }
+
+    // Las advertencias van arriba: la más importante es que el juicio salió de
+    // un stub y no de un modelo.
     for (const aviso of analisis.advertencias || []) {
       el.appendChild(crear("p", "pg-aviso", aviso));
     }
@@ -122,39 +205,47 @@
     el.appendChild(pie);
   }
 
-  async function analizarCorreoAbierto() {
-    const correo = window.PhishGuardAdaptador.extraerCorreoAbierto();
+  // ------------------------------------------------------------------- Acciones
 
-    if (!correo) {
+  async function enviarAlBackend(correo, esParcial = false) {
+    mostrarMensaje("PhishGuard", "Analizando…");
+
+    let respuesta;
+    try {
+      respuesta = await chrome.runtime.sendMessage({ tipo: "analizar", correo });
+    } catch (error) {
+      // Pasa cuando la extensión se recarga con la pestaña abierta: el content
+      // script viejo queda huérfano y su canal ya no existe.
       mostrarMensaje(
         "PhishGuard",
-        "No se pudo leer el correo abierto. Gmail pudo haber cambiado su estructura: " +
-          "usa el popup de la extensión para pegar el correo a mano.",
+        `Se perdió la conexión con la extensión (${error.message}). Recarga la pestaña de Gmail.`,
         "pg-error"
       );
       return;
     }
 
-    mostrarMensaje("PhishGuard", "Analizando…");
-
-    const respuesta = await chrome.runtime.sendMessage({ tipo: "analizar", correo });
-    if (respuesta?.ok) {
-      mostrarAnalisis(respuesta.analisis);
-    } else {
-      mostrarMensaje("PhishGuard", respuesta?.error || "Error desconocido.", "pg-error");
-    }
+    if (respuesta?.ok) mostrarAnalisis(respuesta.analisis, esParcial);
+    else mostrarMensaje("PhishGuard", respuesta?.error || "Error desconocido.", "pg-error");
   }
 
-  /** Inserta el botón flotante si hay un correo abierto y aún no está puesto. */
-  function asegurarBoton() {
-    const id = window.PhishGuardAdaptador.idMensajeAbierto();
+  async function analizarCorreoAbierto() {
+    const resultado = window.PhishGuardAdaptador.extraerCorreoAbierto();
 
-    if (!id) {
-      document.getElementById("phishguard-boton")?.remove();
-      document.getElementById(ID_PANEL)?.remove();
-      idAnalizado = null;
+    if (!resultado.ok) {
+      mostrarFalloDeExtraccion(resultado);
       return;
     }
+    await enviarAlBackend(resultado.correo);
+  }
+
+  /**
+   * Inserta el botón flotante.
+   *
+   * Se pone SIEMPRE que estemos en Gmail, haya o no un mensaje reconocido. Si no
+   * lo hay, el usuario lo pulsa y recibe una explicación; antes no recibía nada.
+   */
+  function asegurarBoton() {
+    const id = window.PhishGuardAdaptador.idMensajeAbierto();
 
     // Al cambiar de mensaje se cierra el panel del anterior: dejar visible el
     // veredicto de otro correo es peor que no mostrar ninguno.
@@ -163,17 +254,18 @@
       idAnalizado = id;
     }
 
-    if (document.getElementById("phishguard-boton")) return;
+    if (document.getElementById(ID_BOTON)) return;
 
     const boton = crear("button", "pg-boton", "Analizar con PhishGuard");
-    boton.id = "phishguard-boton";
+    boton.id = ID_BOTON;
     boton.addEventListener("click", analizarCorreoAbierto);
     document.body.appendChild(boton);
   }
 
   // Gmail es una SPA: no hay recarga de página al abrir un correo, así que la
   // única forma de enterarse es observar el DOM. El observador se limita a la
-  // región de contenido para no reaccionar a cada repintado de la barra lateral.
+  // región de contenido cuando existe, para no reaccionar a cada repintado de la
+  // barra lateral.
   function observar() {
     const objetivo = document.querySelector('div[role="main"]') || document.body;
     new MutationObserver(() => asegurarBoton()).observe(objetivo, {
@@ -184,4 +276,5 @@
   }
 
   observar();
+  console.log("[PhishGuard] overlay activo — botón abajo a la derecha");
 })();
