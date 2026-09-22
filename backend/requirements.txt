@@ -10,6 +10,7 @@ python-multipart==0.0.20   # requerido por FastAPI para recibir el .eml subido
 pytest==8.3.4
 httpx==0.28.1              # lo usa TestClient de Starlette
 
-# El adaptador real de Claude (app/llm/claude.py) NO se instala por defecto:
-# el demo corre con el stub. Para el sprint 4, descomentar:
-# anthropic==0.69.0
+# Adaptador real de Claude (app/llm/claude.py). Se instala siempre para que sus
+# pruebas corran, pero el pipeline NO lo usa salvo con PHISHGUARD_LLM=claude:
+# el demo sigue arrancando sin clave de API ni conexión.
+anthropic==1.8.0

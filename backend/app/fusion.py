@@ -86,8 +86,22 @@ def fusionar(
 
     Complejidad: O(n log n) por el ordenamiento de las señales.
     """
-    score = PESO_LLM * llm.score + PESO_REGLAS * reglas.score
     advertencias: list[str] = []
+
+    # Cuando el modelo no emitió juicio —lo rechazó, se truncó o falló la API—
+    # su `score` no significa nada. Meterlo en la suma ponderada con valor 0
+    # arrastraría el veredicto hacia "legítimo" por algo que el modelo nunca
+    # dijo, que es el peor error posible en un detector de phishing. El
+    # veredicto sale entonces solo del baseline, y se avisa.
+    if llm.sin_juicio:
+        score = reglas.score
+        advertencias.append(
+            "El modelo no emitió juicio sobre este correo "
+            f"({llm.motivo_sin_juicio}). El veredicto sale ÚNICAMENTE del baseline "
+            "por reglas: no es un resultado del sistema asistido por IA."
+        )
+    else:
+        score = PESO_LLM * llm.score + PESO_REGLAS * reglas.score
 
     ids = {s.id for s in senales}
     if ids & _SUPLANTACION and ids & _AUTENTICACION_FALLIDA:
@@ -111,7 +125,11 @@ def fusionar(
     # Que reglas y LLM coincidan es información distinta de que el correo sea
     # peligroso: un correo con score 0.5 donde ambos dicen 0.5 es más informativo
     # que uno donde uno dice 0.1 y el otro 0.9.
-    confianza = round(1.0 - abs(llm.score - reglas.score), 4)
+    #
+    # Si solo habló una fuente no hay acuerdo que medir. Se devuelve 0.0 y la
+    # advertencia de arriba explica por qué; dejar el cálculo normal daría una
+    # confianza alta inventada a partir de un score que el modelo nunca emitió.
+    confianza = 0.0 if llm.sin_juicio else round(1.0 - abs(llm.score - reglas.score), 4)
 
     if llm.es_stub:
         advertencias.append(

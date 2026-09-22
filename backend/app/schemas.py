@@ -81,6 +81,18 @@ class ResultadoLLM(BaseModel):
         description="True cuando el score NO viene de un modelo real. Nunca reportar "
         "métricas como resultado del proyecto si este campo es True.",
     )
+    sin_juicio: bool = Field(
+        default=False,
+        description="True cuando el modelo no llegó a emitir un juicio. En ese caso "
+        "`score` NO significa nada y la fusión debe ignorarlo: un correo que el "
+        "modelo no juzgó es un dato que falta, no un veredicto de 'legítimo'.",
+    )
+    motivo_sin_juicio: str | None = Field(
+        default=None,
+        description="Por qué no hubo juicio, para poder agrupar los casos en la "
+        "evaluación: 'rechazo_del_modelo:<categoría>', 'respuesta_truncada' o "
+        "'error_de_api:<tipo>'.",
+    )
 
 
 class Analisis(BaseModel):
