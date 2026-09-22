@@ -1,11 +1,11 @@
 /**
- * Popup: la vía de análisis que no depende de Gmail.
+ * Popup: la vía de análisis que no depende de ningún webmail.
  *
  * Existe por tres razones, en orden de importancia:
- *  1. Es el plan B cuando el adaptador de Gmail se rompe por un cambio de DOM.
+ *  1. Es el plan B cuando un adaptador se rompe por un cambio de DOM.
  *  2. Permite analizar un `.eml` de los datasets de referencia sin abrir nada.
  *  3. Es lo que se demuestra en la sustentación: no depende de tener una cuenta
- *     de Gmail con un correo de phishing a mano.
+ *     de un webmail con un correo de phishing a mano.
  *
  * Como en el overlay, el resultado se pinta con `textContent`: parte de lo que
  * se muestra es contenido del correo analizado, es decir, entrada no confiable.

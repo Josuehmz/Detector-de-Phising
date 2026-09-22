@@ -1,5 +1,10 @@
 /**
- * Interfaz dentro de Gmail: el botón de análisis y el panel de resultado.
+ * Interfaz dentro del webmail: el botón de análisis y el panel de resultado.
+ *
+ * No sabe en qué webmail corre. Todo lo que necesita saber se lo da
+ * `window.PhishGuardAdaptador`, que `adaptador.js` publica tras elegir el perfil
+ * del host. Gracias a eso, añadir Outlook o Yahoo no tocó una línea de este
+ * archivo salvo los textos, que ahora nombran al proveedor detectado.
  *
  * Tres decisiones de diseño que conviene poder sustentar:
  *
@@ -14,14 +19,19 @@
  *    la extensión en el vehículo de la inyección que pretende detectar.
  *
  * 3. **El botón está siempre, y el fallo se explica.** La primera versión solo
- *    mostraba el botón cuando reconocía un mensaje abierto: si los selectores de
- *    Gmail cambiaban, no aparecía nada y el usuario no tenía forma de saber si
- *    la extensión estaba instalada, si el backend estaba caído o si el DOM había
- *    cambiado. Un fallo silencioso es peor que un fallo.
+ *    mostraba el botón cuando reconocía un mensaje abierto: si los selectores
+ *    del webmail cambiaban, no aparecía nada y el usuario no tenía forma de
+ *    saber si la extensión estaba instalada, si el backend estaba caído o si el
+ *    DOM había cambiado. Un fallo silencioso es peor que un fallo.
  */
 
 (() => {
   "use strict";
+
+  // Sin adaptador no hay nada que hacer: estamos en un host que ningún perfil
+  // reconoce. Pintar el botón igualmente solo produciría un clic sin respuesta.
+  const adaptador = window.PhishGuardAdaptador;
+  if (!adaptador) return;
 
   const ID_PANEL = "phishguard-panel";
   const ID_BOTON = "phishguard-boton";
@@ -97,10 +107,25 @@
         "p",
         "pg-mensaje",
         fallidos.length === resultado.diagnostico.length
-          ? "No hay ningún correo abierto, o la estructura de Gmail cambió por completo."
-          : "Gmail cambió su estructura y faltan campos que el análisis necesita."
+          ? `No hay ningún correo abierto, o la estructura de ${adaptador.nombre} cambió por completo.`
+          : `${adaptador.nombre} cambió su estructura y faltan campos que el análisis necesita.`
       )
     );
+
+    // Mientras el perfil no esté comprobado contra la página real, un fallo de
+    // extracción es tan probable que sea del perfil como del webmail. Decirlo
+    // evita que se persiga un cambio de DOM que nunca ocurrió.
+    if (!adaptador.verificado) {
+      el.appendChild(
+        crear(
+          "p",
+          "pg-aviso",
+          `El perfil de ${adaptador.nombre} todavía no se ha comprobado contra la ` +
+            "página real, así que el fallo puede estar en los selectores de esta " +
+            "extensión y no en un cambio del webmail."
+        )
+      );
+    }
 
     const lista = crear("ul", "pg-senales");
     for (const campo of resultado.diagnostico) {
@@ -202,6 +227,16 @@
         )} · acuerdo ${analisis.confianza.toFixed(2)}`
       )
     );
+    // De qué adaptador salió el texto analizado. Con varios webmails soportados,
+    // un veredicto raro puede venir de una extracción mala y no del pipeline;
+    // sin esta línea no habría forma de distinguirlo mirando el panel.
+    pie.appendChild(
+      crear(
+        "span",
+        null,
+        `adaptador: ${adaptador.nombre}${adaptador.verificado ? "" : " · sin verificar"}`
+      )
+    );
     el.appendChild(pie);
   }
 
@@ -218,7 +253,7 @@
       // script viejo queda huérfano y su canal ya no existe.
       mostrarMensaje(
         "PhishGuard",
-        `Se perdió la conexión con la extensión (${error.message}). Recarga la pestaña de Gmail.`,
+        `Se perdió la conexión con la extensión (${error.message}). Recarga la pestaña de ${adaptador.nombre}.`,
         "pg-error"
       );
       return;
@@ -229,7 +264,7 @@
   }
 
   async function analizarCorreoAbierto() {
-    const resultado = window.PhishGuardAdaptador.extraerCorreoAbierto();
+    const resultado = adaptador.extraerCorreoAbierto();
 
     if (!resultado.ok) {
       mostrarFalloDeExtraccion(resultado);
@@ -241,11 +276,12 @@
   /**
    * Inserta el botón flotante.
    *
-   * Se pone SIEMPRE que estemos en Gmail, haya o no un mensaje reconocido. Si no
-   * lo hay, el usuario lo pulsa y recibe una explicación; antes no recibía nada.
+   * Se pone SIEMPRE que el host tenga adaptador, haya o no un mensaje
+   * reconocido. Si no lo hay, el usuario lo pulsa y recibe una explicación;
+   * antes no recibía nada.
    */
   function asegurarBoton() {
-    const id = window.PhishGuardAdaptador.idMensajeAbierto();
+    const id = adaptador.idMensajeAbierto();
 
     // Al cambiar de mensaje se cierra el panel del anterior: dejar visible el
     // veredicto de otro correo es peor que no mostrar ninguno.
@@ -262,12 +298,14 @@
     document.body.appendChild(boton);
   }
 
-  // Gmail es una SPA: no hay recarga de página al abrir un correo, así que la
-  // única forma de enterarse es observar el DOM. El observador se limita a la
-  // región de contenido cuando existe, para no reaccionar a cada repintado de la
-  // barra lateral.
+  // Los cuatro webmails son SPA: no hay recarga de página al abrir un correo,
+  // así que la única forma de enterarse es observar el DOM. El observador se
+  // limita a la región de contenido cuando existe, para no reaccionar a cada
+  // repintado de la barra lateral. Cada perfil declara cuál es esa región,
+  // porque no todos usan `div[role="main"]`.
   function observar() {
-    const objetivo = document.querySelector('div[role="main"]') || document.body;
+    const objetivo =
+      window.PhishGuardComun.primero(document, adaptador.raizObservada) || document.body;
     new MutationObserver(() => asegurarBoton()).observe(objetivo, {
       childList: true,
       subtree: true,
@@ -276,5 +314,7 @@
   }
 
   observar();
-  console.log("[PhishGuard] overlay activo — botón abajo a la derecha");
+  console.log(
+    `[PhishGuard] overlay activo en ${adaptador.nombre} — botón abajo a la derecha`
+  );
 })();
