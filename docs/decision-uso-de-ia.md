@@ -25,11 +25,16 @@ correo con ayuda de IA y obtener un texto sin faltas, con tono corporativo, y
 enviarlo desde un dominio propio con SPF, DKIM y DMARC correctamente
 configurados. No dispara casi ninguna regla.
 
-**No es una hipótesis: está medido en nuestro propio sistema.** Ese escenario
-—spear phishing redactado con IA— puntúa `0,496` en nuestro baseline y no
-alcanza el umbral de phishing. Existe una prueba automatizada que fija ese valor
-y un comentario que prohíbe "arreglarla" ajustando pesos, precisamente para que
-siga sirviendo como evidencia del hueco.
+**No es una hipótesis: está medido en nuestro propio sistema.** El escenario 02
+del repositorio —spear phishing redactado con IA, sin errores, sin urgencia
+explícita, con SPF/DKIM/DMARC en `pass` sobre dominio propio— queda en la banda
+de revisión humana y **no alcanza el umbral de phishing**. Hay una prueba
+automatizada que fija ese resultado y un comentario que prohíbe "arreglarla"
+ajustando pesos, para que siga sirviendo de evidencia del hueco.
+
+Esa misma prueba dice que **el modelo real es lo que debe cerrar la brecha**, y
+que ella es el marcador contra el que se mide si lo consiguió. Ver §8.3: medido
+el 2026-09-29, **no la ha cerrado**.
 
 ## 2. Alternativas consideradas y por qué se descartaron
 
@@ -171,6 +176,37 @@ Se observa que en el correo legítimo el modelo puntúa más alto que las reglas
 (0,3 frente a 0,05). Con dos casos no se puede afirmar nada, pero es la dirección
 típica de un modelo pequeño —desconfiar de más—, y se traduciría en falsos
 positivos. **Queda anotado como algo a vigilar en la evaluación.**
+
+### 8.3 El caso que motiva el proyecto: el modelo local NO cierra la brecha
+
+Resultado medido el 2026-09-29 sobre el escenario 02 (spear phishing redactado
+con IA), a través de la API con `PHISHGUARD_LLM=ollama`:
+
+| Fuente | Score | Veredicto que daría sola |
+|---|---|---|
+| **Baseline por reglas** | **0,70** | `phishing` (umbral 0,65) |
+| Modelo `llama3.2:3b` | 0,40 | `sospechoso` |
+| **Sistema fusionado** (0,6 × modelo + 0,4 × reglas) | **0,52** | **`sospechoso`** |
+
+Dos lecturas, las dos incómodas y las dos hay que reportarlas:
+
+1. **El modelo no cerró la brecha.** Con el stub el caso quedaba en `0,496`; con
+   el modelo real queda en `0,52`. Sigue siendo `sospechoso`, sigue sin llegar a
+   `phishing`. La prueba que marca este límite **no ha cambiado de color**.
+
+2. **En este caso concreto el modelo empeora el veredicto.** Las reglas solas
+   habrían dicho `phishing`; el sistema con IA dice `sospechoso`. El modelo leyó
+   bien las señales —su razonamiento cita la petición de datos bancarios y el
+   dominio sospechoso— pero las tradujo a un 4 sobre 10.
+
+Esto cuestiona directamente el peso `PESO_LLM = 0.6`, que asume implícitamente
+que el modelo es al menos tan bueno como las reglas. Con un modelo de 3B esa
+suposición **no se sostiene en este caso**.
+
+Lo que **no** se debe hacer: bajar el peso hasta que este ejemplo salga bien.
+Sería calibrar contra un caso escrito por nosotros, que es exactamente lo que el
+proyecto se prohibió. La decisión sobre los pesos se toma con el corpus, y este
+resultado es una entrada más para esa decisión, no una razón para tocar nada hoy.
 
 ## 9. Lo que todavía no está
 
