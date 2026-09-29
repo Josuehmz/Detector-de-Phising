@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PhishGuard — detección de phishing asistida por IA",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Prototipo académico. Analiza el correo abierto en Gmail, Outlook/Hotmail, Yahoo o Proton, o uno pegado a mano, y explica por qué lo clasifica así.",
   "icons": {
     "16": "icons/icon16.png",

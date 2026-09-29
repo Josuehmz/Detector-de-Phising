@@ -242,13 +242,44 @@
 
   // ------------------------------------------------------------------- Acciones
 
+  /**
+   * Contador de segundos mientras se espera al backend.
+   *
+   * Con el stub la respuesta era inmediata y bastaba un "Analizando…". Con un
+   * modelo local en CPU la espera pasa del minuto, y un texto fijo durante ese
+   * rato se lee como "se colgó" — que es justo lo que el usuario pensó el
+   * 2026-09-29. Ver el segundero es la diferencia entre esperar y desesperar.
+   */
+  function contarEspera() {
+    const inicio = Date.now();
+    const pintar = () => {
+      const segundos = Math.round((Date.now() - inicio) / 1000);
+      const panel = mostrarMensaje("PhishGuard", `Analizando… ${segundos} s`);
+      if (segundos >= 20) {
+        panel.appendChild(
+          crear(
+            "p",
+            "pg-aviso",
+            "Con un modelo local esto puede tardar más de un minuto. " +
+              "La primera consulta tras arrancar incluye la carga del modelo."
+          )
+        );
+      }
+    };
+
+    pintar();
+    const reloj = setInterval(pintar, 1000);
+    return () => clearInterval(reloj);
+  }
+
   async function enviarAlBackend(correo, esParcial = false) {
-    mostrarMensaje("PhishGuard", "Analizando…");
+    const detenerContador = contarEspera();
 
     let respuesta;
     try {
       respuesta = await chrome.runtime.sendMessage({ tipo: "analizar", correo });
     } catch (error) {
+      detenerContador();
       // Pasa cuando la extensión se recarga con la pestaña abierta: el content
       // script viejo queda huérfano y su canal ya no existe.
       mostrarMensaje(
@@ -258,6 +289,8 @@
       );
       return;
     }
+
+    detenerContador();
 
     if (respuesta?.ok) mostrarAnalisis(respuesta.analisis, esParcial);
     else mostrarMensaje("PhishGuard", respuesta?.error || "Error desconocido.", "pg-error");

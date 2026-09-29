@@ -82,6 +82,13 @@ experimento se vuelve reproducible**, porque aquí sí se pueden fijar
 en la misma liga, y si no supera al baseline **eso es un hallazgo que se
 reporta**, no algo que se maquilla cambiando de modelo.
 
+**Cuenta con que va lento.** En CPU (medido en un Ryzen 7 3700U sin GPU
+utilizable) un análisis tarda **50-70 segundos**, y la primera petición tras
+arrancar suma la carga del modelo en memoria. Por eso la extensión espera hasta
+**3 minutos** antes de darse por vencida y muestra un contador mientras tanto.
+Si tu modelo es aún más lento, el techo se sube guardando `timeoutMs` en
+`chrome.storage.local`.
+
 #### Vía B — API de Claude (de pago, aparte de la suscripción)
 
 ```bash

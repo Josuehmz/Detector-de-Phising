@@ -10,9 +10,20 @@
 
 const BACKEND_POR_DEFECTO = "http://127.0.0.1:8000";
 
-// El análisis puede tardar si detrás hay un modelo real; 30 s es el techo antes
-// de decirle al usuario que algo va mal, en vez de dejar la interfaz colgada.
-const TIMEOUT_MS = 30000;
+/**
+ * Techo de espera antes de dar la petición por perdida.
+ *
+ * Empezó en 30 s, que bastaban con el stub determinista. Dejó de bastar el
+ * 2026-09-29, al conectar un modelo local por Ollama: en CPU un análisis tarda
+ * entre 50 y 70 segundos, y la primera petición tras arrancar suma además la
+ * carga del modelo en memoria. La extensión abortaba a los 30 s y acusaba al
+ * backend de no responder cuando el backend estaba trabajando.
+ *
+ * Tres minutos cubren el caso lento con margen. Sigue habiendo techo a
+ * propósito: sin él, un backend caído dejaría la interfaz en "Analizando…"
+ * para siempre.
+ */
+const TIMEOUT_MS_POR_DEFECTO = 180000;
 
 /** Lee la URL del backend configurada, o la de por defecto. */
 async function urlBackend() {
@@ -20,10 +31,18 @@ async function urlBackend() {
   return (guardado.backendUrl || BACKEND_POR_DEFECTO).replace(/\/+$/, "");
 }
 
+/** Techo de espera configurable, para quien corra un modelo aún más lento. */
+async function timeoutMs() {
+  const guardado = await chrome.storage.local.get("timeoutMs");
+  const valor = Number(guardado.timeoutMs);
+  return Number.isFinite(valor) && valor > 0 ? valor : TIMEOUT_MS_POR_DEFECTO;
+}
+
 /** `fetch` con límite de tiempo: sin esto una petición colgada nunca resuelve. */
-async function fetchConTimeout(url, opciones = {}) {
+async function fetchConTimeout(url, opciones = {}, techoMs) {
   const control = new AbortController();
-  const temporizador = setTimeout(() => control.abort(), TIMEOUT_MS);
+  const limite = techoMs ?? TIMEOUT_MS_POR_DEFECTO;
+  const temporizador = setTimeout(() => control.abort(), limite);
   try {
     return await fetch(url, { ...opciones, signal: control.signal });
   } finally {
@@ -41,12 +60,17 @@ async function fetchConTimeout(url, opciones = {}) {
  */
 async function analizar(correo) {
   const base = await urlBackend();
+  const techo = await timeoutMs();
   try {
-    const respuesta = await fetchConTimeout(`${base}/api/v1/analyze`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(correo),
-    });
+    const respuesta = await fetchConTimeout(
+      `${base}/api/v1/analyze`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(correo),
+      },
+      techo
+    );
 
     if (!respuesta.ok) {
       const detalle = await respuesta.text();
@@ -55,7 +79,15 @@ async function analizar(correo) {
     return { ok: true, analisis: await respuesta.json() };
   } catch (error) {
     if (error.name === "AbortError") {
-      return { ok: false, error: `El backend no respondió en ${TIMEOUT_MS / 1000} s.` };
+      // La causa más probable no es que el backend esté caído, sino que esté
+      // pensando: con un modelo local en CPU el análisis tarda de verdad.
+      return {
+        ok: false,
+        error:
+          `El backend no respondió en ${Math.round(techo / 1000)} s. Si está usando un ` +
+          "modelo local, puede estar cargándolo en memoria o analizando todavía; " +
+          "compruébalo en la consola del backend y vuelve a intentarlo.",
+      };
     }
     return {
       ok: false,
@@ -68,7 +100,10 @@ async function analizar(correo) {
 async function estado() {
   const base = await urlBackend();
   try {
-    const respuesta = await fetchConTimeout(`${base}/api/v1/health`);
+    // Techo corto y propio: `health` no analiza nada, así que si tarda es que no
+    // está. Heredar los tres minutos del análisis dejaría el popup en blanco un
+    // buen rato cada vez que el backend estuviera caído.
+    const respuesta = await fetchConTimeout(`${base}/api/v1/health`, {}, 5000);
     if (!respuesta.ok) return { ok: false, error: `El backend respondió ${respuesta.status}.` };
     return { ok: true, salud: await respuesta.json() };
   } catch (error) {
