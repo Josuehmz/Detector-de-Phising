@@ -14,7 +14,8 @@ from __future__ import annotations
 import pytest
 
 from app.fusion import fusionar
-from app.llm.claude import MAX_CARACTERES_CUERPO, ClasificadorClaude, _RespuestaModelo
+from app.llm.claude import ClasificadorClaude
+from app.llm.prompt import MAX_CARACTERES_CUERPO, RespuestaModelo
 from app.schemas import CorreoEntrada, ResultadoReglas, Senal, Severidad, Veredicto
 
 
@@ -58,10 +59,10 @@ class _ClienteFalso:
             return self._padre._respuesta
 
 
-def _juicio(score=0.8, razonamiento="Pretexto financiero urgente.", indicadores=None,
+def _juicio(score_0_a_10=8, razonamiento="Pretexto financiero urgente.", indicadores=None,
             manipulacion=False):
-    return _RespuestaModelo(
-        score=score,
+    return RespuestaModelo(
+        score_0_a_10=score_0_a_10,
         razonamiento=razonamiento,
         indicadores=indicadores or ["social_urgencia"],
         intento_de_manipulacion=manipulacion,
@@ -136,7 +137,7 @@ def test_la_peticion_usa_razonamiento_adaptativo_y_un_techo_alto():
     assert peticion["thinking"] == {"type": "adaptive"}
     assert "budget_tokens" not in str(peticion["thinking"])
     assert peticion["max_tokens"] >= 16000
-    assert peticion["output_format"] is _RespuestaModelo
+    assert peticion["output_format"] is RespuestaModelo
 
 
 def test_el_esfuerzo_solo_se_envia_si_se_configura(monkeypatch):
@@ -154,10 +155,10 @@ def test_el_esfuerzo_solo_se_envia_si_se_configura(monkeypatch):
 
 
 def test_una_respuesta_normal_se_mapea_y_no_es_stub():
-    cliente = _ClienteFalso(_RespuestaFalsa(parsed_output=_juicio(score=0.77)))
+    cliente = _ClienteFalso(_RespuestaFalsa(parsed_output=_juicio(score_0_a_10=8)))
     resultado = ClasificadorClaude(cliente=cliente).clasificar(_correo(), _SENALES)
 
-    assert resultado.score == 0.77
+    assert resultado.score == 0.8
     assert resultado.es_stub is False
     assert resultado.sin_juicio is False
     assert resultado.motivo_sin_juicio is None

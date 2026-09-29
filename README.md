@@ -53,10 +53,36 @@ que se pueda cargar tal cual está en el repositorio.
   PhishGuard* abajo a la derecha. Ver los proveedores soportados más abajo.
 - **Con un archivo:** pestaña **Pegar correo** → *Subir .eml*.
 
-### 4. Activar el modelo real (opcional)
+### 4. Activar un modelo real (opcional)
 
 Por defecto el pipeline usa el **stub determinista** y no necesita clave ni red.
-Para usar el modelo de verdad:
+Hay dos vías para usar un modelo de verdad, y **las dos comparten el mismo
+prompt** (`app/llm/prompt.py`), para que comparar modelos mida modelos y no
+prompts distintos.
+
+#### Vía A — modelo local con Ollama (gratis, sin clave)
+
+```bash
+ollama serve                       # deja el servidor corriendo
+ollama pull llama3.2:3b            # ~2 GB, una sola vez
+export PHISHGUARD_LLM=ollama
+```
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `PHISHGUARD_OLLAMA_URL` | `http://localhost:11434` | Dónde escucha Ollama |
+| `PHISHGUARD_OLLAMA_MODELO` | `llama3.2:3b` | Modelo descargado a usar |
+| `PHISHGUARD_OLLAMA_SEED` | `42` | Semilla; con `temperature=0` hace el experimento repetible |
+| `PHISHGUARD_OLLAMA_TIMEOUT` | `300` | Segundos. En CPU una respuesta tarda minutos |
+
+Dos ventajas que no son solo el precio: **el correo no sale de la máquina**, lo
+que refuerza el argumento de minimización de datos del proyecto; y **el
+experimento se vuelve reproducible**, porque aquí sí se pueden fijar
+`temperature` y `seed`. La contrapartida es capacidad: un modelo de 3B no juega
+en la misma liga, y si no supera al baseline **eso es un hallazgo que se
+reporta**, no algo que se maquilla cambiando de modelo.
+
+#### Vía B — API de Claude (de pago, aparte de la suscripción)
 
 ```bash
 export ANTHROPIC_API_KEY=...        # setx en Windows, o `ant auth login`
@@ -111,7 +137,7 @@ hace solo una de las dos cosas.
 
 ```bash
 cd backend
-.venv\Scripts\python -m pytest -q          # 92 pruebas: pipeline + adaptador de Claude
+.venv\Scripts\python -m pytest -q          # 105 pruebas: pipeline + adaptadores
 ```
 
 ```bash
@@ -169,12 +195,13 @@ backend/
     pipeline.py      El flujo completo, sin lógica de detección
     extractors/      urls · remitente · social · adjuntos
     baseline/        Reglas ponderadas — la línea base de la comparación
-    llm/             port.py (interfaz) · stub.py (por defecto) · claude.py (modelo real)
+    llm/             port.py (interfaz) · prompt.py (prompt compartido)
+                     stub.py (por defecto) · claude.py · ollama.py
     fusion.py        Combina reglas + LLM y redacta la explicación
     eml.py           Ingesta de archivos .eml
     samples.py       Los cinco escenarios de prueba
     main.py          API HTTP
-  tests/             92 pruebas (16 del adaptador de Claude, ninguna usa red)
+  tests/             105 pruebas (29 de los dos adaptadores, ninguna usa red)
 extension/
   manifest.json      Manifest V3
   content/

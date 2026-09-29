@@ -33,6 +33,17 @@ def obtener_clasificador() -> ClasificadorLLM:
             )
             return ClasificadorStub()
 
+    if eleccion == "ollama":
+        try:
+            from app.llm.ollama import ClasificadorOllama
+
+            return ClasificadorOllama()
+        except Exception as error:  # noqa: BLE001
+            _log.warning(
+                "No se pudo inicializar el clasificador Ollama (%s). Se usa el stub.", error
+            )
+            return ClasificadorStub()
+
     if eleccion != "stub":
         _log.warning("PHISHGUARD_LLM='%s' no reconocido. Se usa el stub.", eleccion)
 

@@ -5,10 +5,10 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 pydantic==2.10.4
 python-multipart==0.0.20   # requerido por FastAPI para recibir el .eml subido
+httpx==0.28.1              # adaptador de Ollama, y lo usa TestClient de Starlette
 
 # Pruebas
 pytest==8.3.4
-httpx==0.28.1              # lo usa TestClient de Starlette
 
 # Adaptador real de Claude (app/llm/claude.py). Se instala siempre para que sus
 # pruebas corran, pero el pipeline NO lo usa salvo con PHISHGUARD_LLM=claude:
