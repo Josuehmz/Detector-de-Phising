@@ -128,6 +128,7 @@ def extraer_senales_remitente(
     cabecera_from: str,
     reply_to: str | None = None,
     cabeceras: dict[str, str] | None = None,
+    cuerpo: str | None = None,
 ) -> list[Senal]:
     """Señales del par (nombre visible, dirección) y de la autenticación."""
     senales: list[Senal] = []
@@ -199,6 +200,51 @@ def extraer_senales_remitente(
                 )
             )
             break
+
+    # Dominio con prefijo operativo/técnico mediante guion (técnica habitual de suplantación)
+    prefijos_sospechosos = (
+        "ti-", "it-", "soporte-", "support-", "seguridad-", "security-",
+        "admin-", "login-", "auth-", "portal-", "update-", "accounts-", "helpdesk-",
+    )
+    if any(registrable.startswith(p) for p in prefijos_sospechosos):
+        senales.append(
+            Senal(
+                id="remitente_prefijo_sospechoso",
+                categoria="remitente",
+                descripcion=(
+                    f"El dominio «{registrable}» combina un prefijo operativo/técnico con "
+                    "un nombre mediante guion, habitual en dominios creados para suplantación."
+                ),
+                severidad=Severidad.ALTA,
+                evidencia=[registrable],
+            )
+        )
+
+    # Discrepancia entre el remitente y direcciones de contacto mencionadas en el cuerpo/firma
+    if cuerpo:
+        direcciones_en_cuerpo = re.findall(
+            r"\b[a-zA-Z0-9_.+-]+@([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)\b", cuerpo
+        )
+        for dom_encontrado in direcciones_en_cuerpo:
+            reg_cuerpo = dominio_registrable(dom_encontrado.lower())
+            if reg_cuerpo and reg_cuerpo != registrable and reg_cuerpo not in FREEMAIL:
+                base_cuerpo = reg_cuerpo.split(".")[0]
+                if (
+                    len(base_cuerpo) >= 4 and base_cuerpo in registrable
+                ) or distancia_edicion(reg_cuerpo, registrable) <= 3:
+                    senales.append(
+                        Senal(
+                            id="remitente_discrepancia_cuerpo",
+                            categoria="remitente",
+                            descripcion=(
+                                f"El correo proviene de «{direccion}», pero en el cuerpo o firma "
+                                f"se menciona el dominio corporativo «{reg_cuerpo}»."
+                            ),
+                            severidad=Severidad.ALTA,
+                            evidencia=[f"Remitente: {dominio}", f"Cuerpo: {dom_encontrado}"],
+                        )
+                    )
+                    break
 
     # Responder lleva a otro dominio: la conversación se desvía al atacante.
     if reply_to:

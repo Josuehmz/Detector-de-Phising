@@ -27,6 +27,8 @@ PESOS: dict[str, float] = {
     # Remitente.
     "remitente_marca_sin_respaldo": 0.35,
     "remitente_dominio_parecido": 0.40,
+    "remitente_discrepancia_cuerpo": 0.40,
+    "remitente_prefijo_sospechoso": 0.25,
     "remitente_cargo_en_freemail": 0.30,
     "remitente_reply_to_distinto": 0.30,
     "remitente_ausente": 0.15,
@@ -43,6 +45,7 @@ PESOS: dict[str, float] = {
     # Ingeniería social.
     "social_credenciales": 0.25,
     "social_amenaza": 0.20,
+    "social_incidente_falso": 0.20,
     "social_confidencialidad": 0.20,
     "social_financiera": 0.20,
     "social_urgencia": 0.15,

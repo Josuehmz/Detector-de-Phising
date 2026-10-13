@@ -19,6 +19,7 @@ backend/data/
 # Secretos
 .env
 .env.*
+!.env.example
 
 # Sistema operativo y editores
 .DS_Store

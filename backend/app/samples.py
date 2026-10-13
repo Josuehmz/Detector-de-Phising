@@ -148,6 +148,39 @@ SAMPLES: tuple[Sample, ...] = (
             origen="test",
         ),
     ),
+    Sample(
+        id="spear_ti_mfa",
+        escenario="06 · Spear phishing corporativo (MFA + suplantación TI)",
+        etiqueta="phishing",
+        correo=CorreoEntrada(
+            asunto="RE: [URGENTE] Actualización de seguridad de doble factor (MFA) - Incidente INC-884210",
+            remitente='"Soporte Técnico" <soporte@ti-colsubsidio.co>',
+            cuerpo_texto=(
+                "Estimado Alejandro,\n\n"
+                "Le escribimos desde el Departamento de TI para dar seguimiento al incidente de "
+                "seguridad registrado el día de hoy (INC-884210) relacionado con los accesos no "
+                "autorizados a la plataforma de nómina.\n\n"
+                "Como parte de los nuevos protocolos de contingencia implementados por la dirección, "
+                "se ha vuelto obligatorio actualizar el método de autenticación de doble factor (MFA) "
+                "para todos los colaboradores del área administrativa antes de que finalice la jornada "
+                "laboral de hoy, a fin de evitar la suspensión preventiva de su cuenta corporativa.\n\n"
+                "Por favor, realice el procedimiento de sincronización ingresando a nuestro portal interno "
+                "de TI en el siguiente enlace:\n\n"
+                "[Acceder al Portal de Actualización de Seguridad (MFA)]\n\n"
+                "Una vez completado el proceso, el sistema generará automáticamente un ticket de "
+                "confirmación y no requerirá ninguna acción adicional de su parte. Agradecemos su "
+                "colaboración inmediata para garantizar la seguridad de la información de la compañía.\n\n"
+                "Atentamente,\n\n"
+                "Mesa de Servicio y TI\n"
+                "Grupo Colsubsidio\n"
+                "PBX: (601) 745 7900 Ext. 4100\n"
+                "soporte@colsubsidio.com\n"
+                "Este mensaje es automático. Por favor no responder directamente a este correo."
+            ),
+            cabeceras={},
+            origen="test",
+        ),
+    ),
 )
 
 _POR_ID = {sample.id: sample for sample in SAMPLES}

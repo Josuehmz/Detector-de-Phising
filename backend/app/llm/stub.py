@@ -25,6 +25,25 @@ from app.schemas import CorreoEntrada, ResultadoLLM, Senal
 # El orden importa: se evalúa de más específico a más genérico.
 _ARQUETIPOS: tuple[tuple[str, frozenset[str], int, float, str], ...] = (
     (
+        "Spear phishing / Suplantación interna de TI o soporte",
+        frozenset(
+            {
+                "remitente_discrepancia_cuerpo",
+                "remitente_prefijo_sospechoso",
+                "social_incidente_falso",
+                "social_autoridad",
+                "social_credenciales",
+                "social_amenaza",
+            }
+        ),
+        2,
+        0.92,
+        "El mensaje simula una comunicación interna de TI o soporte corporativo invocando un "
+        "incidente de seguridad o actualización obligatoria de credenciales/MFA. El dominio de envío "
+        "no coincide con la identidad corporativa declarada o utiliza un prefijo técnico no oficial, "
+        "presionando con consecuencias negativas como la suspensión preventiva de la cuenta.",
+    ),
+    (
         "BEC / fraude del CEO",
         frozenset(
             {

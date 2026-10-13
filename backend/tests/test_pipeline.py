@@ -209,3 +209,25 @@ def test_parseo_de_eml():
 def test_un_eml_se_puede_analizar_igual_que_un_correo_estructurado():
     analisis = analizar(parsear_eml(EML_MINIMO), ClasificadorStub())
     assert analisis.veredicto is not Veredicto.LEGITIMO
+
+
+def test_spear_phishing_corporativo_colsubsidio():
+    correo = CorreoEntrada(
+        asunto="RE: [URGENTE] Actualización de seguridad de doble factor (MFA) - Incidente INC-884210",
+        remitente='"Soporte Técnico" <soporte@ti-colsubsidio.co>',
+        cuerpo_texto=(
+            "Estimado Alejandro,\n"
+            "Le escribimos desde el Departamento de TI para dar seguimiento al incidente "
+            "de seguridad registrado el día de hoy (INC-884210).\n"
+            "Es obligatorio actualizar el método de autenticación de doble factor (MFA) "
+            "antes de que finalice la jornada laboral de hoy, a fin de evitar la suspensión "
+            "preventiva de su cuenta corporativa.\n"
+            "Atentamente,\nMesa de Servicio y TI\nsoporte@colsubsidio.com"
+        ),
+        origen="test",
+    )
+    analisis = analizar(correo, ClasificadorStub())
+    assert analisis.veredicto is Veredicto.PHISHING
+    assert analisis.score >= 0.85
+    assert "Spear phishing / Suplantación interna de TI" in analisis.explicacion
+

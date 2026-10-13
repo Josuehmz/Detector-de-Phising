@@ -234,3 +234,35 @@ def test_pdf_normal_no_dispara_nada():
 
 def test_archivo_sin_extension_no_rompe():
     assert extraer_senales_adjunto(["README"]) == []
+
+
+# ------------------------------------------------------------- Spear Phishing / TI
+
+
+def test_discrepancia_de_dominio_entre_remitente_y_cuerpo():
+    cuerpo = "Atentamente,\nMesa de Soporte\nsoporte@colsubsidio.com"
+    senales = ids(
+        extraer_senales_remitente(
+            "Soporte Técnico <soporte@ti-colsubsidio.co>",
+            cuerpo=cuerpo,
+        )
+    )
+    assert "remitente_discrepancia_cuerpo" in senales
+    assert "remitente_prefijo_sospechoso" in senales
+
+
+def test_deteccion_de_mfa_y_suspension_preventiva():
+    asunto = "RE: [URGENTE] Actualización de seguridad (MFA)"
+    cuerpo = (
+        "Le escribimos por el incidente INC-884210. Debe actualizar el método de "
+        "autenticación de doble factor (MFA) antes de que finalice la jornada laboral "
+        "a fin de evitar la suspensión preventiva de su cuenta corporativa."
+    )
+    senales = ids(extraer_senales_sociales(asunto, cuerpo))
+    assert {
+        "social_urgencia",
+        "social_amenaza",
+        "social_credenciales",
+        "social_incidente_falso",
+    } <= senales
+

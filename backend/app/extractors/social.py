@@ -25,6 +25,8 @@ _CATEGORIAS: dict[str, tuple[Severidad, str, tuple[str, ...]]] = {
             r"\b(?:en|dentro de|antes de)\s+(?:las\s+)?\d+\s*(?:horas?|h|minutos?|d[ií]as?)\b",
             r"\binmediatamente\b", r"\bde inmediato\b", r"\burgente\b", r"\bcuanto antes\b",
             r"\bhoy mismo\b", r"\b[uú]ltimo aviso\b", r"\bvence hoy\b", r"\bexpira (?:hoy|en)\b",
+            r"\bantes de que finalice (?:la )?(?:jornada|d[ií]a)\b", r"\bplazo m[aá]ximo\b",
+            r"\ba la brevedad\b",
             r"\bimmediately\b", r"\burgent\b", r"\bright away\b", r"\bas soon as possible\b",
             r"\bexpires? (?:today|in|within)\b", r"\bfinal notice\b", r"\bwithin \d+ hours?\b",
         ),
@@ -34,7 +36,10 @@ _CATEGORIAS: dict[str, tuple[Severidad, str, tuple[str, ...]]] = {
         "El correo anuncia una consecuencia negativa si la víctima no actúa.",
         (
             r"\b(?:ser[áa]|sera|quedar[áa])\s+(?:suspendid[oa]|bloquead[oa]|cancelad[oa]|desactivad[oa]|eliminad[oa])\b",
-            r"\bsuspensi[óo]n (?:de|permanente)\b", r"\bperder[áa]s? (?:el )?acceso\b",
+            r"\bsuspensi[óo]n (?:preventiva|temporal|inmediata|permanente|de)\b",
+            r"\b(?:evitar|para no sufrir)\s+(?:la\s+)?(?:suspensi[óo]n|el bloqueo|la desactivaci[óo]n)\b",
+            r"\ba fin de evitar (?:la\s+)?(?:suspensi[óo]n|el bloqueo|la desactivaci[óo]n)\b",
+            r"\bperder[áa]s? (?:el )?acceso\b",
             r"\bcierre de (?:su )?cuenta\b", r"\bsanci[óo]n\b", r"\bmulta\b", r"\bproceso legal\b",
             r"\b(?:will be|has been) (?:suspended|blocked|disabled|terminated|closed|deleted)\b",
             r"\blose access\b", r"\bpermanent(?:ly)? (?:suspend|clos)\w*\b", r"\blegal action\b",
@@ -42,7 +47,7 @@ _CATEGORIAS: dict[str, tuple[Severidad, str, tuple[str, ...]]] = {
     ),
     "social_credenciales": (
         Severidad.ALTA,
-        "El correo pide datos de acceso o verificación de identidad.",
+        "El correo pide datos de acceso, credenciales o verificación de identidad.",
         (
             # Se buscan raíces y no formas exactas: el mismo pretexto aparece como
             # "verifique", "verifica", "confirmen", "actualizar". Fijar la conjugación
@@ -50,10 +55,14 @@ _CATEGORIAS: dict[str, tuple[Severidad, str, tuple[str, ...]]] = {
             r"\b(?:verif\w+|confirm\w+|actualic\w+|actualiz\w+|valid\w+|reactiv\w+)\s+"
             r"(?:su|tu|sus|tus)\s+"
             r"(?:cuenta|contrase[ñn]a|clave|identidad|informaci[óo]n|datos|credenciales)\b",
+            r"\b(?:m[eé]todo de )?(?:autenticaci[óo]n(?: de)?|doble factor|mfa|2fa|segundo factor|token)\b",
+            r"\b(?:actualizar|configurar|sincronizar|verificar|validar)\s+(?:el\s+)?(?:m[eé]todo de\s+)?(?:autenticaci[óo]n|mfa|2fa|doble factor|acceso|seguridad)\b",
+            r"\bprocedimiento de sincronizaci[óo]n\b",
+            r"\bportal (?:interno )?de (?:ti|seguridad|actualizaci[óo]n|acceso)\b",
             r"\biniciar? sesi[óo]n\b(?=.{0,80}\b(?:aqu[ií]|enlace|aqui)\b)",
             r"\bingrese (?:su|tu) (?:contrase[ñn]a|clave|usuario|c[óo]digo)\b",
-            r"\b(?:verify|confirm|update|validate|reactivate)\s+your\s+"
-            r"(?:account|password|identity|information|details|credentials)\b",
+            r"\b(?:verify|confirm|update|validate|reactivate|sync)\s+(?:your\s+)"
+            r"(?:account|password|identity|information|details|credentials|mfa|2fa)\b",
             r"\bsign in (?:here|now|to)\b", r"\benter your (?:password|credentials|pin)\b",
         ),
     ),
@@ -107,6 +116,18 @@ _CATEGORIAS: dict[str, tuple[Severidad, str, tuple[str, ...]]] = {
             r"\bmesa de ayuda\b", r"\bsoporte t[ée]cnico\b", r"\badministrador del sistema\b",
             r"\bthis is (?:the )?(?:ceo|cfo|your manager)\b", r"\bit (?:department|helpdesk)\b",
             r"\bsystem administrator\b",
+        ),
+    ),
+    "social_incidente_falso": (
+        Severidad.MEDIA,
+        "El correo invoca un falso incidente de seguridad, contingencia o ticket para justificar la acción.",
+        (
+            r"\bincidente (?:de seguridad|registrado|n[uú]mero|inc-\d+)\b",
+            r"\bprotocolos? de contingencia\b",
+            r"\baccesos? no autorizados?\b",
+            r"\bticket (?:de confirmaci[óo]n|de soporte|#[0-9a-z]+)\b",
+            r"\bsecurity incident\b",
+            r"\bunauthorized access\b",
         ),
     ),
 }

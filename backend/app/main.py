@@ -15,8 +15,16 @@ from __future__ import annotations
 import logging
 import os
 
+from pathlib import Path
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path)
+load_dotenv()
+
 
 from app import __version__
 from app.eml import parsear_eml

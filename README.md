@@ -56,11 +56,23 @@ que se pueda cargar tal cual está en el repositorio.
 ### 4. Activar un modelo real (opcional)
 
 Por defecto el pipeline usa el **stub determinista** y no necesita clave ni red.
-Hay dos vías para usar un modelo de verdad, y **las dos comparten el mismo
-prompt** (`app/llm/prompt.py`), para que comparar modelos mida modelos y no
-prompts distintos.
+Hay tres vías para usar un modelo de verdad:
 
-#### Vía A — modelo local con Ollama (gratis, sin clave)
+#### Vía A — Google Gemini (Recomendado para evaluación en la nube)
+
+Crea o edita el archivo `backend/.env` (puedes basarte en `backend/.env.example`):
+
+```env
+PHISHGUARD_LLM=gemini
+GEMINI_API_KEY=tu_api_key_de_gemini
+PHISHGUARD_MODELO=gemini-3.8-flash
+```
+
+Al levantar el backend (`uvicorn app.main:app --reload`), la extensión mostrará en el popup:
+- Estado: **`conectado · gemini-3.8-flash`** (en verde, confirmando el modelo real en vivo).
+- Veredictos basados en análisis de ingeniería social y pretextos estructurados por Gemini.
+
+#### Vía B — modelo local con Ollama (gratis, sin clave)
 
 ```bash
 ollama serve                       # deja el servidor corriendo
@@ -89,20 +101,22 @@ arrancar suma la carga del modelo en memoria. Por eso la extensión espera hasta
 Si tu modelo es aún más lento, el techo se sube guardando `timeoutMs` en
 `chrome.storage.local`.
 
-#### Vía B — API de Claude (de pago, aparte de la suscripción)
+#### Vía C — API de Claude (de pago, aparte de la suscripción)
 
 ```bash
-export ANTHROPIC_API_KEY=...        # setx en Windows, o `ant auth login`
+export ANTHROPIC_API_KEY=...        # setx en Windows
 export PHISHGUARD_LLM=claude
 ```
 
 | Variable | Por defecto | Para qué |
 |---|---|---|
-| `PHISHGUARD_LLM` | `stub` | `claude` activa el adaptador real |
-| `PHISHGUARD_MODELO` | `claude-opus-5` | Id del modelo |
-| `PHISHGUARD_MAX_TOKENS` | `16000` | Techo de la respuesta. Los tokens de razonamiento salen de aquí: un valor bajo trunca en vez de ahorrar |
-| `PHISHGUARD_EFFORT` | *(sin definir)* | `low`…`max`. La palanca de costo. **Elegirla midiendo**, no por intuición |
-| `PHISHGUARD_FALLBACK` | *(apagado)* | `1` activa el respaldo del servidor ante un rechazo. Apagado a propósito: mezclaría dos modelos en la evaluación, y la API de lotes lo rechaza |
+| `PHISHGUARD_LLM` | `stub` | `gemini`, `ollama` o `claude` activa el adaptador real |
+| `GEMINI_API_KEY` | *(sin definir)* | Clave de API de Google Gemini |
+| `PHISHGUARD_MODELO` | `gemini-3.8-flash` / `claude-opus-5` | Id del modelo en la nube a usar |
+| `ANTHROPIC_API_KEY` | *(sin definir)* | Clave de API de Anthropic |
+| `PHISHGUARD_MAX_TOKENS` | `16000` | Techo de la respuesta. Los tokens de razonamiento salen de aquí |
+| `PHISHGUARD_EFFORT` | *(sin definir)* | `low`…`max`. La palanca de costo en Claude |
+| `PHISHGUARD_FALLBACK` | *(apagado)* | `1` activa el respaldo del servidor ante un rechazo |
 
 **Si no hay credencial, el arranque lo avisa** y cada análisis devuelve
 `sin_juicio`: el veredicto sale solo del baseline y la respuesta lo dice. No hay

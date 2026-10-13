@@ -32,7 +32,9 @@ def extraer_senales(correo: CorreoEntrada) -> list[Senal]:
     senales: list[Senal] = []
     senales.extend(extraer_senales_url(correo.cuerpo_texto, correo.cuerpo_html))
     senales.extend(
-        extraer_senales_remitente(correo.remitente, correo.reply_to, correo.cabeceras)
+        extraer_senales_remitente(
+            correo.remitente, correo.reply_to, correo.cabeceras, correo.cuerpo_texto
+        )
     )
     senales.extend(extraer_senales_sociales(correo.asunto, correo.cuerpo_texto))
     senales.extend(extraer_senales_adjunto(correo.adjuntos))

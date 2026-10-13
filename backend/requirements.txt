@@ -10,7 +10,10 @@ httpx==0.28.1              # adaptador de Ollama, y lo usa TestClient de Starlet
 # Pruebas
 pytest==8.3.4
 
-# Adaptador real de Claude (app/llm/claude.py). Se instala siempre para que sus
-# pruebas corran, pero el pipeline NO lo usa salvo con PHISHGUARD_LLM=claude:
-# el demo sigue arrancando sin clave de API ni conexión.
+# Variables de entorno
+python-dotenv==1.2.4
+
+# Adaptadores reales de LLM
 anthropic==1.8.0
+google-genai==2.29.0
+

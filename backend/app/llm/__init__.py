@@ -12,15 +12,32 @@ _log = logging.getLogger(__name__)
 
 
 def obtener_clasificador() -> ClasificadorLLM:
-    """Devuelve la implementación indicada por `PHISHGUARD_LLM`.
+    """Devuelve la implementación indicada por `PHISHGUARD_LLM` o variables de entorno.
 
-    El valor por defecto es `stub`: el demo tiene que arrancar en la máquina del
-    profesor sin clave de API ni conexión. Con `PHISHGUARD_LLM=claude` se usa el
-    modelo real, y si su inicialización falla se registra el motivo y se cae al
-    stub en vez de tumbar el servicio — pero la respuesta queda marcada con
-    `es_stub=True`, así que la degradación nunca pasa inadvertida.
+    El valor por defecto es `stub`: el demo arranca en cualquier máquina sin clave
+    de API ni conexión. Con `PHISHGUARD_LLM=gemini` o `PHISHGUARD_LLM=claude` se usa
+    el modelo real correspondiente. Si no se especifica pero se detecta `GEMINI_API_KEY`
+    en el entorno, se activa Gemini automáticamente.
     """
-    eleccion = os.getenv("PHISHGUARD_LLM", "stub").strip().lower()
+    eleccion = os.getenv("PHISHGUARD_LLM", "").strip().lower()
+
+    if not eleccion and os.getenv("GEMINI_API_KEY"):
+        eleccion = "gemini"
+    elif not eleccion and os.getenv("ANTHROPIC_API_KEY"):
+        eleccion = "claude"
+    elif not eleccion:
+        eleccion = "stub"
+
+    if eleccion == "gemini":
+        try:
+            from app.llm.gemini import ClasificadorGemini
+
+            return ClasificadorGemini()
+        except Exception as error:  # noqa: BLE001 - cualquier fallo debe degradar, no romper
+            _log.warning(
+                "No se pudo inicializar el clasificador Gemini (%s). Se usa el stub.", error
+            )
+            return ClasificadorStub()
 
     if eleccion == "claude":
         try:
@@ -51,3 +68,4 @@ def obtener_clasificador() -> ClasificadorLLM:
 
 
 __all__ = ["ClasificadorLLM", "ClasificadorStub", "obtener_clasificador"]
+
